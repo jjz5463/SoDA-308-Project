@@ -126,7 +126,7 @@ MSE <- (summary(model22)$sigma)^2
 step(none, scope = list(upper = model22),scale = MSE,direction="both")
 ```
 
-## fit model again with selected control variables
+## refit mode with selected control variables 2022
 ```{r}
 model22_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + 
     LFPVetsRate, data = df22)
@@ -150,10 +150,10 @@ MSE <- (summary(model21)$sigma)^2
 step(none, scope = list(upper = model21),scale = MSE,direction="both")
 ```
 
-## refit model
+## refit model 2021
 ```{r}
-model21_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + UnempRate2020 + 
-    highSch_15_19 + LFPVetsRate, data = df21)
+model21_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + 
+    LFPVetsRate, data = df21)
 summary(model21_select)
 ```
 
@@ -175,9 +175,10 @@ MSE <- (summary(model20)$sigma)^2
 step(none, scope = list(upper = model20),scale = MSE,direction="both")
 ```
 
+## refit model 2020
 ```{r}
-model20_select <- lm(formula = log(vioIndex) ~ deepPov_minor + 
-    poveRate_15_19 + highSch_15_19 + UnempRate2019 + PopChangeRate1019 + LFPVetsRate, 
+model20_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2019 + 
+    LFPVetsRate,
     data = df20)
 summary(model20_select)
 ```
@@ -201,10 +202,10 @@ MSE <- (summary(model19)$sigma)^2
 step(none, scope = list(upper = model19),scale = MSE,direction="both")
 ```
 
-# refit model for 2019
+## refit model for 2019
 ```{r}
-model19_select <- lm(formula = log(vioIndex) ~ deepPov_minor + 
-    poveRate_15_19 + highSch_15_19 + UnempRate2018 + PopChangeRate1019 + LFPVetsRate, 
+model19_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2018 + 
+    LFPVetsRate,
     data = df19)
 summary(model19_select)
 ```
@@ -217,9 +218,10 @@ model18 <- lm(log(vioIndex) ~ . , data = df18)
 summary(model18)
 ```
 
+## refit model 2018
 ```{r}
-model18_select <- lm(formula = log(vioIndex) ~ deepPov_minor + 
-    poveRate_15_19 + highSch_15_19 + UnempRate2017 + PopChangeRate1019 + LFPVetsRate, 
+model18_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2017 + 
+    LFPVetsRate,
     data = df18)
 summary(model18_select)
 ```
