@@ -7,6 +7,223 @@ output: html_notebook
 library(data.table)
 library(tidyverse)
 
-df <- fread("./308SourceCode/ProcessedData/Train.csv")
+df <- fread("./ProcessedData/Train.csv")
 ```
 
+# define gun violence per 10,000 people
+```{r}
+df <- df %>%
+  mutate(`Population 2020` = readr::parse_number(`Population 2020`)) %>%
+  mutate(vioIndex = n_totVictim / `Population 2020` * 10000) %>%
+  select(!c(Code, `Population 2020`))
+
+dfModelReady <- df %>%
+  select(!c(state, city_or_county, n_killed, n_injured, n_totVictim,
+            povRate_19, povRate_minor_19, median_income_19))
+```
+
+# divide df into differnet years
+```{r}
+#2018
+df18 <- dfModelReady %>%
+  filter(IncYear == 2018) %>%
+  select(!c(IncYear, UnempRate2020, UnempRate2019, UnempRate2018))
+
+#2019
+df19 <- dfModelReady %>%
+  filter(IncYear == 2019) %>%
+  select(!c(IncYear, UnempRate2020, UnempRate2019, UnempRate2017))
+
+#2020
+df20 <- dfModelReady %>%
+  filter(IncYear == 2020) %>%
+  select(!c(IncYear, UnempRate2020, UnempRate2018, UnempRate2017))
+
+#2021
+df21 <- dfModelReady %>%
+  filter(IncYear == 2021) %>%
+  select(!c(IncYear, UnempRate2019, UnempRate2018, UnempRate2017))
+
+#2022
+df22 <- dfModelReady %>%
+  filter(IncYear == 2022) %>%
+  select(!c(IncYear, UnempRate2019, UnempRate2018, UnempRate2017))
+```
+
+# descriptive analysis for dependent / Outcome varaible (gun violence)
+```{r}
+# check distribution of victim
+df %>%
+  ggplot(aes(x = n_totVictim)) +
+  geom_density()
+
+# histogram
+df %>%
+  ggplot(aes(x = n_totVictim)) +
+  geom_bar() 
+
+# by year
+df %>%
+  ggplot(aes(x = n_totVictim)) +
+  geom_bar() +
+  facet_grid(IncYear~.)
+```
+
+**Comment**: Highly skewed data
+
+```{r}
+# check distribution of victim per 10,000 people
+df %>%
+  ggplot(aes(x = vioIndex)) +
+  geom_density()
+
+# by year
+df %>%
+  ggplot(aes(x = vioIndex)) +
+  geom_density() +
+  facet_grid(IncYear~.)
+```
+
+**Comment**: victim per 10,000 people is also skewed, looks looks like lots of county already have gun violence incidents this year.
+
+# descriptive analysis for main explantory varaible (poverty)
+```{r}
+# check distribution of poverty rate 2019
+df %>%
+  ggplot(aes(x = povRate_19)) +
+  geom_density()
+
+# histogram
+df %>%
+  ggplot(aes(x = povRate_19)) +
+  geom_bar() 
+```
+
+**Comment**: Not normal
+
+```{r}
+# check distribution of poverty rate 2015 to 2019
+df %>%
+  ggplot(aes(x = poveRate_15_19)) +
+  geom_density()
+```
+
+**Comment**: kind normal
+
+# fit a model for 2022
+```{r}
+model22 <- lm(log(vioIndex) ~ . , data = df22)
+summary(model22)
+```
+
+## try feature selection to find best control varaibles
+```{r}
+# set an empty model
+none <- lm(log(vioIndex) ~ 1, data = df22)
+
+# find MSE
+MSE <- (summary(model22)$sigma)^2
+step(none, scope = list(upper = model22),scale = MSE,direction="both")
+```
+
+## fit model again with selected control variables
+```{r}
+model22_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + 
+    LFPVetsRate, data = df22)
+summary(model22_select)
+```
+
+
+# fit a model for 2021
+```{r}
+model21 <- lm(log(vioIndex) ~ . , data = df21)
+summary(model21)
+```
+
+## find best control variables
+```{r}
+# set an empty model
+none <- lm(log(vioIndex) ~ 1, data = df21)
+
+# find MSE
+MSE <- (summary(model21)$sigma)^2
+step(none, scope = list(upper = model21),scale = MSE,direction="both")
+```
+
+## refit model
+```{r}
+model21_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + UnempRate2020 + 
+    highSch_15_19 + LFPVetsRate, data = df21)
+summary(model21_select)
+```
+
+**comment**: UnempRate2020 + highSch_15_19 + LFPVetsRate always explain violence and looks like it is poverty in minor rather than pverty of all explains violent
+
+# fit a model for 2020
+```{r}
+model20 <- lm(log(vioIndex) ~ . , data = df20)
+summary(model20)
+```
+
+## find best control variables
+```{r}
+# set an empty model
+none <- lm(log(vioIndex) ~ 1, data = df20)
+
+# find MSE
+MSE <- (summary(model20)$sigma)^2
+step(none, scope = list(upper = model20),scale = MSE,direction="both")
+```
+
+```{r}
+model20_select <- lm(formula = log(vioIndex) ~ deepPov_minor + 
+    poveRate_15_19 + highSch_15_19 + UnempRate2019 + PopChangeRate1019 + LFPVetsRate, 
+    data = df20)
+summary(model20_select)
+```
+
+**comment**: again, highSch_15_19 + UnempRate2019 + LFPVetsRate is very important contorl variables, poverty explains stuff, but poverty in minor is more important.
+
+# fit a model for 2019
+```{r}
+model19 <- lm(log(vioIndex) ~ . , data = df19)
+summary(model19)
+```
+
+
+## find best control variables
+```{r}
+# set an empty model
+none <- lm(log(vioIndex) ~ 1, data = df19)
+
+# find MSE
+MSE <- (summary(model19)$sigma)^2
+step(none, scope = list(upper = model19),scale = MSE,direction="both")
+```
+
+# refit model for 2019
+```{r}
+model19_select <- lm(formula = log(vioIndex) ~ deepPov_minor + 
+    poveRate_15_19 + highSch_15_19 + UnempRate2018 + PopChangeRate1019 + LFPVetsRate, 
+    data = df19)
+summary(model19_select)
+```
+
+**comment**: highSch_15_19 + PopChangeRate1019 explains
+
+# fit a model for 2018
+```{r}
+model18 <- lm(log(vioIndex) ~ . , data = df18)
+summary(model18)
+```
+
+```{r}
+model18_select <- lm(formula = log(vioIndex) ~ deepPov_minor + 
+    poveRate_15_19 + highSch_15_19 + UnempRate2017 + PopChangeRate1019 + LFPVetsRate, 
+    data = df18)
+summary(model18_select)
+```
+
+
+#conclusion
+poverty not necessary show strong evidence in every year, but poverty in minority show strong evidence of influence. Moreover, education (percent own high school diploma), unemployment rate of last year, and Labor force participation rate for veterans age 18 to 64, 2015-19 also show very consistent influence over the gun violence.
