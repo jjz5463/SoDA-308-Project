@@ -1,0 +1,12 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# loading library and data
+```{r}
+library(data.table)
+library(tidyverse)
+
+df <- fread("./308SourceCode/ProcessedData/Train.csv")
+```
+
