@@ -1,6 +1,6 @@
 2019Gun.csv - https://www.gunviolencearchive.org/reports
 
-allYearGun.cs - https://www.gunviolencearchive.org/reports
+allYearGun.csv - https://www.gunviolencearchive.org/reports
 
 Education.csv - https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/
 

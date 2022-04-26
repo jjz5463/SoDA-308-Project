@@ -55,18 +55,24 @@ df22 <- dfModelReady %>%
 # check distribution of victim
 df %>%
   ggplot(aes(x = n_totVictim)) +
-  geom_density()
+  geom_density() +
+  ggtitle('Distribution of Victim Count (County level)') +
+  xlab('Total Victim (County Level)') 
 
 # histogram
 df %>%
   ggplot(aes(x = n_totVictim)) +
-  geom_bar() 
+  geom_bar() +
+  ggtitle('Histogram of Victim Count') +
+  xlab('Total Victim (County Level)') 
 
 # by year
 df %>%
   ggplot(aes(x = n_totVictim)) +
   geom_bar() +
-  facet_grid(IncYear~.)
+  facet_grid(IncYear~.) +
+  ggtitle('Victim Count Distribution by Year') +
+  xlab('Total Victim (County Level)') 
 ```
 
 **Comment**: Highly skewed data
@@ -75,7 +81,10 @@ df %>%
 # check distribution of victim per 10,000 people
 df %>%
   ggplot(aes(x = vioIndex)) +
-  geom_density()
+  geom_density() +
+  ggtitle('Distribution of Victim Count per 10,000 People') +
+  xlab('Victims of Gun Violence per 10,000 People (County Level)')
+  
 
 # by year
 df %>%
@@ -91,12 +100,16 @@ df %>%
 # check distribution of poverty rate 2019
 df %>%
   ggplot(aes(x = povRate_19)) +
-  geom_density()
+  geom_density() +
+  ggtitle('Distribution of 2019 Poverty Rate') +
+  xlab('2019 Poverty Rate (County Level)')
 
 # histogram
 df %>%
   ggplot(aes(x = povRate_19)) +
-  geom_bar() 
+  geom_histogram(bins = 40) +
+  ggtitle('Histogram of 2019 Poverty Rate') +
+  xlab('2019 Poverty Rate (County Level)')
 ```
 
 **Comment**: Not normal
@@ -105,7 +118,15 @@ df %>%
 # check distribution of poverty rate 2015 to 2019
 df %>%
   ggplot(aes(x = poveRate_15_19)) +
-  geom_density()
+  geom_density() +
+  ggtitle('Distribution of Average Poverty Rate from 2015 to 2019') +
+  xlab('2015 - 2019 Average Poverty Rate (County Level)')
+
+df %>%
+  ggplot(aes(x = poveRate_15_19)) +
+  geom_histogram(bins = 40) +
+  ggtitle('Histogram of Average Poverty Rate from 2015 to 2019') +
+  xlab('2015 - 2019 Average Poverty Rate (County Level)')
 ```
 
 **Comment**: kind normal
@@ -128,9 +149,11 @@ step(none, scope = list(upper = model22),scale = MSE,direction="both")
 
 ## refit mode with selected control variables 2022
 ```{r}
-model22_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + 
-    LFPVetsRate, data = df22)
+model22_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + LFPVetsRate, data = df22)
 summary(model22_select)
+
+plot(model22_select,1)
+plot(model22_select,2)
 ```
 
 
@@ -152,9 +175,11 @@ step(none, scope = list(upper = model21),scale = MSE,direction="both")
 
 ## refit model 2021
 ```{r}
-model21_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + 
-    LFPVetsRate, data = df21)
+model21_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2020 + LFPVetsRate, data = df21)
 summary(model21_select)
+
+plot(model21_select,1)
+plot(model21_select,2)
 ```
 
 **comment**: UnempRate2020 + highSch_15_19 + LFPVetsRate always explain violence and looks like it is poverty in minor rather than pverty of all explains violent
@@ -181,9 +206,63 @@ model20_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + 
     LFPVetsRate,
     data = df20)
 summary(model20_select)
+
+plot(model20_select,1)
+plot(model20_select,2)
+
+library(Stat2Data)
+cooksplot(model20_select)
 ```
 
 **comment**: again, highSch_15_19 + UnempRate2019 + LFPVetsRate is very important contorl variables, poverty explains stuff, but poverty in minor is more important.
+
+## delete outliers
+```{r}
+#delete outliers
+df20 <- df20[-c(5,13,19)]
+model20_select <- lm(formula = log(vioIndex) ~ poveRate_15_19 + deepPov_minor + highSch_15_19 + UnempRate2019 + LFPVetsRate, data = df20)
+summary(model20_select)
+
+plot(model20_select,1)
+plot(model20_select,2)
+
+cooksplot(model20_select)
+```
+
+
+## make 2020's model looks better (more organized)
+```{r}
+library(stargazer)
+stargazer(model20_select, type = "text",
+          title = "Linear Model for 2020 Gun Violence (County Level)",
+          dep.var.labels = "Log Number of Victims per 10,000 people",
+          covariate.labels = c("Average poverty rate of last 5 year (2015 - 2019)",
+                               "Average deep poverty rate for children of last 5 years (2015 - 2019)",
+                               "Average proportion of population has high school diploma of last 5 years (2015 - 2019)",
+                               "Unemployment rate of last year (2019)",
+                               "Average labor force participation rate for veterans age 18 to 64 in last 5 years (2015 - 2019)",
+                               "Intercept"))
+```
+
+## plot for 2020
+```{r}
+library(sjPlot)
+
+plot_model(model20_select, type = "pred",
+           terms = "poveRate_15_19",
+           show.data = TRUE,
+           title = 'Predicted Victims per 10,000 people',
+           axis.title = c('Average Poverty Rate of Last 5 Year (2015 - 2019)',
+                          'Victims per 10,000 People (Back Transformed)'))
+
+plot_model(model20_select, type = "pred",
+           terms = "deepPov_minor",
+           show.data = TRUE,
+           title = 'Predicted Victims per 10,000 people',
+           axis.title = c('Average Deep Poverty Rate for Children of Last 5 Years (2015 - 2019)',
+                          'Victims per 10,000 People (Back Transformed)'))
+```
+
 
 # fit a model for 2019
 ```{r}
